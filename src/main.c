@@ -31,7 +31,7 @@ void spi_init(void)
     GPIO_Init_Structure.GPIO_Mode = GPIO_Mode_AF;
     GPIO_Init_Structure.GPIO_OType = GPIO_OType_PP;
     GPIO_Init_Structure.GPIO_Pin = SCK_PIN|MISO_PIN|MOSI_PIN;
-    GPIO_Init_Structure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init_Structure.GPIO_PuPd = GPIO_PuPd_DOWN;
     GPIO_Init_Structure.GPIO_Speed = GPIO_Speed_Level_3;
     GPIO_Init(GPIOA, &GPIO_Init_Structure);
 
@@ -45,7 +45,7 @@ void spi_init(void)
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
     SPI_InitTypeDef SPI_Init_Structure;
-    SPI_Init_Structure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
+    SPI_Init_Structure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
     SPI_Init_Structure.SPI_CPHA = SPI_CPHA_1Edge;
     SPI_Init_Structure.SPI_CPOL = SPI_CPOL_Low;
     SPI_Init_Structure.SPI_DataSize = SPI_DataSize_8b;
@@ -63,7 +63,8 @@ void spi_init(void)
 void spi_send_byte(uint16_t byte)
 {
     GPIO_ResetBits(GPIOA, NSS_PIN);
-    SPI_I2S_SendData16(SPI1, byte);
+     *((__IO uint16_t*)&SPI1->DR) = byte;
+    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
     while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_BSY) == SET);
     GPIO_SetBits(GPIOA, NSS_PIN);
 }
@@ -71,7 +72,7 @@ void spi_send_byte(uint16_t byte)
 int main(void)
 {
     spi_init();
-    spi_send_byte(0XF0);
+    spi_send_byte(0x2A);
     while(1)
     {
 
